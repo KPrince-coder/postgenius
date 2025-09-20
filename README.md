@@ -5,12 +5,14 @@ AI-powered social media post generation using FastAPI, Jinja2, and Groq's API.
 ## Features
 
 - 🤖 **AI-Powered Generation**: Uses Groq's fast LLaMA models to create engaging social media posts
-- 🌐 **Web Interface**: Clean, responsive web interface for easy post generation
+- 🎯 **Multi-Platform Support**: Generate optimized content for Twitter/X and LinkedIn
+- 🌐 **Web Interface**: Clean, responsive web interface with platform selection
 - 🔌 **REST API**: Full REST API with comprehensive documentation
 - 📊 **Rate Limiting**: Built-in rate limiting to prevent abuse
 - 🛡️ **Input Validation**: Comprehensive input validation and sanitization
 - 📝 **Comprehensive Logging**: Detailed logging for monitoring and debugging
 - 📚 **Auto Documentation**: Automatic API documentation with Swagger/OpenAPI
+- 🏗️ **Clean Architecture**: Proper Python package structure following best practices
 
 ## Quick Start
 
@@ -44,7 +46,14 @@ echo "GROQ_API_KEY=your_groq_api_key_here" > .env
 4. Run the application:
 
 ```bash
-uvicorn main:app --reload
+# Using uvicorn directly with new package structure
+uvicorn app.main:app --reload
+
+# Using the entry point script
+python run.py
+
+# Or if using uv
+uv run uvicorn app.main:app --reload
 ```
 
 5. Open your browser and navigate to:
@@ -52,35 +61,62 @@ uvicorn main:app --reload
    - **API Documentation**: <http://localhost:8000/docs>
    - **Alternative API Docs**: <http://localhost:8000/redoc>
 
+## Platform Support
+
+The application supports generating content optimized for different social media platforms:
+
+### 🐦 **Twitter/X Posts**
+- **Character limit**: Under 280 characters ideally
+- **Style**: Conversational, engaging, with strategic use of emojis
+- **Focus**: Quick engagement, retweets, and discussions
+
+### 💼 **LinkedIn Posts**
+- **Length**: 150-300 words for optimal engagement
+- **Style**: Professional, thought leadership content
+- **Focus**: Business insights, career advice, networking
+
+### Platform Selection
+- **Web Interface**: Use the dropdown to select your target platform
+- **API**: Include `"platform": "twitter"` or `"platform": "linkedin"` in your request
+- **Default**: Twitter/X if no platform is specified
+
 ## API Endpoints
 
 ### Web Interface
 
 - `GET /` - Home page with application overview
-- `GET /generate-post` - Post generation form
-- `POST /generate-post` - Handle form submission
+- `GET /generate-post` - Post generation form with platform selection
+- `POST /generate-post` - Handle form submission with platform support
 
 ### REST API
 
 - `GET /health` - Health check endpoint
 - `POST /api/generate-post` - Generate social media post
 
-### API Usage Example
+### API Usage Examples
 
+**Twitter/X Post Generation:**
 ```bash
 curl -X POST "http://localhost:8000/api/generate-post" \
      -H "Content-Type: application/json" \
-     -d '{"topic": "The benefits of morning exercise"}'
+     -d '{"topic": "The benefits of morning exercise", "platform": "twitter"}'
 ```
 
-Response:
+**LinkedIn Post Generation:**
+```bash
+curl -X POST "http://localhost:8000/api/generate-post" \
+     -H "Content-Type: application/json" \
+     -d '{"topic": "The benefits of morning exercise", "platform": "linkedin"}'
+```
 
+**Response:**
 ```json
 {
   "success": true,
   "generated_post": "🌅 Starting your day with exercise isn't just about fitness—it's about setting the tone for everything that follows...",
   "error_message": null,
-  "processing_time": 2.34
+  "processing_time": 2.34,
+  "platform": "twitter"
 }
 ```
 
@@ -100,25 +136,66 @@ Response:
 ### Project Structure
 
 ```
-├── main.py              # Main FastAPI application
-├── templates/           # Jinja2 templates
-│   ├── base.html       # Base template
-│   ├── index.html      # Home page
+fastapi_jinja2_try/
+├── app/                    # Main application package
+│   ├── __init__.py
+│   ├── main.py            # FastAPI app and route handlers
+│   ├── models/            # Pydantic models
+│   │   ├── __init__.py
+│   │   ├── requests.py    # Request models and enums
+│   │   └── responses.py   # Response models
+│   ├── services/          # Business logic
+│   │   ├── __init__.py
+│   │   └── post_generator.py # Post generation service
+│   ├── utils/             # Utility functions
+│   │   ├── __init__.py
+│   │   └── rate_limiter.py # Rate limiting utilities
+│   └── config/            # Configuration
+│       ├── __init__.py
+│       └── settings.py    # Environment variables and constants
+├── templates/             # Jinja2 templates
+│   ├── base.html         # Base template
+│   ├── index.html        # Home page
 │   └── generate_post.html # Post generation page
-├── static/             # Static files (CSS, JS)
-├── test_api.py         # API tests
-├── pyproject.toml      # Project dependencies
-└── README.md           # This file
+├── static/               # Static files (CSS, JS)
+├── tests/                # Test package
+│   ├── __init__.py
+│   └── test_api.py       # API tests
+├── run.py                # Entry point script
+├── pyproject.toml        # Project dependencies and configuration
+└── README.md             # This file
 ```
+
+**Package Organization:**
+- **`app/`** - Main application package with proper separation of concerns
+- **`app/models/`** - Pydantic models for request/response validation
+- **`app/services/`** - Business logic and external API integrations
+- **`app/utils/`** - Utility functions and helpers
+- **`app/config/`** - Configuration management and environment variables
+- **`tests/`** - Test package with organized test modules
+
+### Architecture Benefits
+
+The refactored package structure provides:
+
+- **🏗️ Separation of Concerns**: Each module has a single, well-defined responsibility
+- **🔧 Maintainability**: Code is organized logically and easy to navigate
+- **🧪 Testability**: Components can be tested in isolation
+- **📈 Scalability**: Easy to add new features in appropriate modules
+- **📚 Best Practices**: Follows Python PEP 8 and package organization standards
+- **🔄 Clean Imports**: No circular dependencies or messy import structures
 
 ### Running Tests
 
 ```bash
-# Start the server first
-uvicorn main:app --reload
+# Start the server first (using new package structure)
+uv run uvicorn app.main:app --reload
 
 # In another terminal, run tests
-python test_api.py
+uv run python tests/test_api.py
+
+# Or run tests directly
+cd tests && uv run python test_api.py
 ```
 
 ## Production Deployment
