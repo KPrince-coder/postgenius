@@ -9,17 +9,20 @@
 </head>
 <body>
     {% block header %}
-    <header>
+    <header id="navbar">
         <nav class="container">
             <div class="logo">
                 <a href="/" style="text-decoration: none; color: inherit;">PostGenius</a>
             </div>
-            <ul>
-                <li><a href="/#features">Features</a></li>
-                <li><a href="/#about">About</a></li>
-                <li><a href="/#contact">Contact</a></li>
-                <li><a href="/generate-post">Generate Post</a></li>
+            <ul class="nav-menu">
+                <li><a href="/#features" class="nav-link">Features</a></li>
+                <li><a href="/generate-post" class="nav-link cta-nav">Generate Post</a></li>
             </ul>
+            <div class="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </nav>
     </header>
     {% endblock %}
@@ -43,5 +46,65 @@
     {% endblock %}
 
     {% block extra_js %}{% endblock %}
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+            const navbar = document.getElementById('navbar');
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+
+            // Smooth scrolling
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        const offsetTop = targetElement.offsetTop - 80; // Account for fixed navbar
+                        window.scrollTo({
+                            top: offsetTop,
+                            behavior: 'smooth'
+                        });
+                    }
+
+                    // Close mobile menu if open
+                    navMenu.classList.remove('active');
+                    mobileToggle.classList.remove('active');
+                });
+            });
+
+            // Mobile menu toggle
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', function() {
+                    navMenu.classList.toggle('active');
+                    this.classList.toggle('active');
+                });
+            }
+
+            // Dynamic navbar background on scroll
+            let lastScrollTop = 0;
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+                // Add/remove scrolled class based on scroll position
+                if (scrollTop > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+
+                // Hide/show navbar on scroll direction
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    navbar.classList.add('hidden');
+                } else {
+                    navbar.classList.remove('hidden');
+                }
+                lastScrollTop = scrollTop;
+            });
+        });
+    </script>
 </body>
 </html>
