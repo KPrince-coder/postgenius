@@ -66,16 +66,19 @@ uv run uvicorn app.main:app --reload
 The application supports generating content optimized for different social media platforms:
 
 ### 🐦 **Twitter/X Posts**
+
 - **Character limit**: Under 280 characters ideally
 - **Style**: Conversational, engaging, with strategic use of emojis
 - **Focus**: Quick engagement, retweets, and discussions
 
 ### 💼 **LinkedIn Posts**
+
 - **Length**: 150-300 words for optimal engagement
 - **Style**: Professional, thought leadership content
 - **Focus**: Business insights, career advice, networking
 
 ### Platform Selection
+
 - **Web Interface**: Use the dropdown to select your target platform
 - **API**: Include `"platform": "twitter"` or `"platform": "linkedin"` in your request
 - **Default**: Twitter/X if no platform is specified
@@ -96,6 +99,7 @@ The application supports generating content optimized for different social media
 ### API Usage Examples
 
 **Twitter/X Post Generation:**
+
 ```bash
 curl -X POST "http://localhost:8000/api/generate-post" \
      -H "Content-Type: application/json" \
@@ -103,6 +107,7 @@ curl -X POST "http://localhost:8000/api/generate-post" \
 ```
 
 **LinkedIn Post Generation:**
+
 ```bash
 curl -X POST "http://localhost:8000/api/generate-post" \
      -H "Content-Type: application/json" \
@@ -110,6 +115,7 @@ curl -X POST "http://localhost:8000/api/generate-post" \
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -167,6 +173,7 @@ fastapi_jinja2_try/
 ```
 
 **Package Organization:**
+
 - **`app/`** - Main application package with proper separation of concerns
 - **`app/models/`** - Pydantic models for request/response validation
 - **`app/services/`** - Business logic and external API integrations
