@@ -3,6 +3,7 @@ Configuration settings and environment variables.
 """
 
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -18,7 +19,7 @@ MODEL = "llama-3.3-70b-versatile"  # Use a known working Groq model
 REQUEST_TIMEOUT = 30.0
 
 # Validation Constants
-MAX_TOPIC_LENGTH = 200
+MAX_TOPIC_LENGTH = 500
 MIN_TOPIC_LENGTH = 3
 
 # Rate Limiting Configuration
