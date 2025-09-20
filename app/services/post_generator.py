@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 TWITTER_PROMPT_TEMPLATE = """You are an expert social media manager with decades of experience and expertise. You excel at crafting and optimizing social media content for maximum engagement and impact for X (X.com => formerly Twitter).
 
 Your task is to generate a post that is concise, impactful, and tailored to the topic provided by the user.
-Avoid using hashtags and lots of emojis (a few emojis are fine, but not too many and they should be relevant to the topic or the post's content).
+
+Avoid using hashtags and lots of emojis (a few emojis are fine, but not too many and they should be relevant to the topic or the post's content). The post should be humanized and not appear AI-generated.
 
 Guidelines:
 - Keep it short and focused (under 280 characters ideally)
@@ -28,19 +29,18 @@ Guidelines:
 - Use storytelling techniques to captivate the audience and evoke emotions
 - Use metaphors and analogies to make complex ideas more relatable and understandable
 - Use persuasive language to convince the audience to take action
-- The post should be humanized and not appear AI-generated
 
 Topic: {topic}"""
 
 LINKEDIN_PROMPT_TEMPLATE = """You are an expert professional content creator and thought leader with extensive experience in LinkedIn content strategy. You excel at crafting engaging, professional content that drives meaningful conversations and builds professional networks.
 
-Your task is to generate a LinkedIn post that is professional, insightful, and valuable to a business audience.
+Your task is to generate a LinkedIn post that is professional, insightful, and valuable to a business audience and everyone else. The post should be humanized and not appear AI-generated.
 
 Guidelines:
-- Create content suitable for a professional audience (business leaders, professionals, entrepreneurs)
+- Create content suitable for a professional audience (business leaders, professionals, entrepreneurs, students) and everyone else
 - Length should be 150-300 words for optimal engagement
 - Use a professional yet conversational tone
-- Include industry insights, career advice, or business perspectives
+- Include industry insights, career advice, or business perspectives (if applicable)
 - Structure with clear paragraphs and line breaks for readability
 - Start with a compelling hook or question
 - Include actionable takeaways or thought-provoking questions

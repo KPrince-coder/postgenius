@@ -82,6 +82,57 @@
             white-space: pre-wrap;
             line-height: 1.6;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-bottom: 1rem;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .copy-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-btn:hover {
+            background: #38a169;
+            transform: translateY(-1px);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn.success {
+            background: #38a169;
+        }
+
+        .copy-btn.error {
+            background: #e53e3e;
+        }
+
+        .copy-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .copy-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
         }
 
         .error {
@@ -245,9 +296,99 @@
             postDiv.innerHTML = `
                 <h3>Generated ${platformName} Post:</h3>
                 <div class="post-content">${postContent}</div>
+                <div class="post-actions">
+                    <button class="copy-btn" data-content="">
+                        <svg class="copy-icon" viewBox="0 0 24 24">
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                        Copy
+                    </button>
+                </div>
                 ${processingTime ? `<small style="color: #666; margin-top: 1rem; display: block;">Generated in ${processingTime}s for ${platformName}</small>` : ''}
             `;
+
+            // Store the original content in the button's data attribute
+            const copyBtn = postDiv.querySelector('.copy-btn');
+            copyBtn.setAttribute('data-content', postContent);
+
+            // Add event listener for copy functionality
+            copyBtn.addEventListener('click', function() {
+                copyToClipboard(this, this.getAttribute('data-content'));
+            });
+
             form.insertAdjacentElement('afterend', postDiv);
+        }
+
+        // Function to copy content to clipboard
+        async function copyToClipboard(button, content) {
+            console.log('Copy function called with content:', content);
+            const originalText = button.innerHTML;
+            const originalClass = button.className;
+
+            try {
+                // Disable button during operation
+                button.disabled = true;
+                console.log('Button disabled, attempting copy...');
+
+                // Try modern Clipboard API first
+                if (navigator.clipboard && window.isSecureContext) {
+                    console.log('Using modern Clipboard API');
+                    await navigator.clipboard.writeText(content);
+                    console.log('Clipboard API copy successful');
+                } else {
+                    console.log('Using fallback copy method');
+                    // Fallback for older browsers or non-HTTPS contexts
+                    const textArea = document.createElement('textarea');
+                    textArea.value = content;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+
+                    if (!document.execCommand('copy')) {
+                        throw new Error('Fallback copy method failed');
+                    }
+
+                    document.body.removeChild(textArea);
+                }
+
+                // Show success feedback
+                button.className = originalClass + ' success';
+                button.innerHTML = `
+                    <svg class="copy-icon" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                    Copied!
+                `;
+
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.className = originalClass;
+                    button.innerHTML = originalText;
+                }, 2000);
+
+            } catch (error) {
+                console.error('Copy failed:', error);
+
+                // Show error feedback
+                button.className = originalClass + ' error';
+                button.innerHTML = `
+                    <svg class="copy-icon" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                    Failed
+                `;
+
+                // Reset button after 3 seconds
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.className = originalClass;
+                    button.innerHTML = originalText;
+                }, 3000);
+            }
         }
 
         if (form) {
