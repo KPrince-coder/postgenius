@@ -2,6 +2,7 @@ import logging
 import os
 import time
 from collections import defaultdict
+from enum import Enum
 
 import httpx
 from dotenv import load_dotenv
@@ -36,6 +37,14 @@ RATE_LIMIT_REQUESTS: int = 10  # requests per window
 RATE_LIMIT_WINDOW: int = 60  # seconds
 
 
+# Enums
+class Platform(str, Enum):
+    """Supported social media platforms"""
+
+    TWITTER = "twitter"
+    LINKEDIN = "linkedin"
+
+
 # Pydantic Models
 class PostGenerationRequest(BaseModel):
     """Request model for post generation"""
@@ -45,6 +54,11 @@ class PostGenerationRequest(BaseModel):
         max_length=MAX_TOPIC_LENGTH,
         description="The topic or idea for the social media post",
         examples=["The benefits of morning exercise"],
+    )
+    platform: Platform = Field(
+        default=Platform.TWITTER,
+        description="The social media platform to generate content for",
+        examples=["twitter", "linkedin"],
     )
 
     @field_validator("topic")
@@ -80,6 +94,11 @@ class PostGenerationResponse(BaseModel):
     )
     processing_time: float | None = Field(
         None, description="Time taken to generate the post in seconds", examples=[2.34]
+    )
+    platform: Platform | None = Field(
+        None,
+        description="The platform the post was generated for",
+        examples=["twitter"],
     )
 
     model_config = ConfigDict(
@@ -171,6 +190,13 @@ async def generate_post_form(request: Request):
     try:
         form_data = await request.form()
         topic = str(form_data.get("topic", "")).strip()
+        platform_str = str(form_data.get("platform", "twitter")).strip()
+
+        # Convert platform string to enum
+        try:
+            platform = Platform(platform_str)
+        except ValueError:
+            platform = Platform.TWITTER  # Default fallback
 
         if not topic:
             return templates.TemplateResponse(
@@ -199,11 +225,12 @@ async def generate_post_form(request: Request):
 
         # Generate post
         start_time = time.time()
-        generated_post = await generate_x_post(topic)
+        generated_post = await generate_social_post(topic, platform)
         processing_time = time.time() - start_time
 
+        platform_name = "X (Twitter)" if platform == Platform.TWITTER else "LinkedIn"
         logger.info(
-            f"Generated post for topic: {topic[:50]}... (took {processing_time:.2f}s)"
+            f"Generated {platform_name} post for topic: {topic[:50]}... (took {processing_time:.2f}s)"
         )
 
         return templates.TemplateResponse(
@@ -212,6 +239,8 @@ async def generate_post_form(request: Request):
                 "request": request,
                 "generated_post": generated_post,
                 "topic": topic,
+                "platform": platform.value,
+                "platform_name": platform_name,
                 "processing_time": f"{processing_time:.2f}",
             },
         )
@@ -260,6 +289,7 @@ async def api_generate_post(
     Generate a social media post via API endpoint.
 
     - **topic**: The topic or idea for the social media post (3-200 characters)
+    - **platform**: The target social media platform (twitter or linkedin, defaults to twitter)
 
     Returns a JSON response with the generated post or error information.
     """
@@ -274,11 +304,16 @@ async def api_generate_post(
 
     start_time = time.time()
     try:
+        platform_name = (
+            "X (Twitter)" if request_data.platform == Platform.TWITTER else "LinkedIn"
+        )
         logger.info(
-            f"API request for topic: {request_data.topic[:50]}... from IP: {client_ip}"
+            f"API request for {platform_name} post on topic: {request_data.topic[:50]}... from IP: {client_ip}"
         )
 
-        generated_post = await generate_x_post(request_data.topic)
+        generated_post = await generate_social_post(
+            request_data.topic, request_data.platform
+        )
         processing_time = time.time() - start_time
 
         logger.info(f"API generation completed in {processing_time:.2f}s")
@@ -288,6 +323,7 @@ async def api_generate_post(
             generated_post=generated_post,
             error_message=None,
             processing_time=processing_time,
+            platform=request_data.platform,
         )
 
     except ValueError as e:
@@ -300,31 +336,23 @@ async def api_generate_post(
             generated_post=None,
             error_message="Failed to generate post. Please try again.",
             processing_time=time.time() - start_time,
+            platform=request_data.platform,
         )
 
 
-async def generate_x_post(usr_topic: str) -> str:
+def get_platform_prompt(platform: Platform, topic: str) -> str:
     """
-    Generate a social media post using Groq API.
+    Get platform-specific prompt for content generation.
 
     Args:
-        usr_topic: The topic for the social media post
+        platform: The target social media platform
+        topic: The topic for the post
 
     Returns:
-        Generated social media post text
-
-    Raises:
-        ValueError: If the topic is invalid
-        Exception: If API call fails
+        Platform-optimized prompt string
     """
-    # Validate input
-    if not usr_topic or not usr_topic.strip():
-        raise ValueError("Topic cannot be empty")
-
-    # Sanitize topic to prevent prompt injection
-    sanitized_topic = usr_topic.replace("<", "&lt;").replace(">", "&gt;").strip()
-
-    prompt = f"""You are an expert social media manager with decades of experience and expertise. You excel at crafting and optimizing social media content for maximum engagement and impact for X (X.com => formerly Twitter).
+    if platform == Platform.TWITTER:
+        return f"""You are an expert social media manager with decades of experience and expertise. You excel at crafting and optimizing social media content for maximum engagement and impact for X (X.com => formerly Twitter).
 
 Your task is to generate a post that is concise, impactful, and tailored to the topic provided by the user.
 Avoid using hashtags and lots of emojis (a few emojis are fine, but not too many and they should be relevant to the topic or the post's content).
@@ -341,7 +369,62 @@ Guidelines:
 - Use persuasive language to convince the audience to take action
 - The post should be humanized and not appear AI-generated
 
-Topic: {sanitized_topic}"""
+Topic: {topic}"""
+
+    elif platform == Platform.LINKEDIN:
+        return f"""You are an expert professional content creator and thought leader with extensive experience in LinkedIn content strategy. You excel at crafting engaging, professional content that drives meaningful conversations and builds professional networks.
+
+Your task is to generate a LinkedIn post that is professional, insightful, and valuable to a business audience.
+
+Guidelines:
+- Create content suitable for a professional audience (business leaders, professionals, entrepreneurs)
+- Length should be 150-300 words for optimal engagement
+- Use a professional yet conversational tone
+- Include industry insights, career advice, or business perspectives
+- Structure with clear paragraphs and line breaks for readability
+- Start with a compelling hook or question
+- Include actionable takeaways or thought-provoking questions
+- Use storytelling to illustrate points when relevant
+- Focus on value creation for the reader
+- Encourage professional discussion and networking
+- Avoid excessive emojis (1-2 professional ones are acceptable)
+- End with a call-to-action or discussion prompt
+- The content should establish thought leadership and expertise
+- Make it shareable and discussion-worthy
+
+Topic: {topic}"""
+
+    else:
+        # Default to Twitter format for unknown platforms
+        return get_platform_prompt(Platform.TWITTER, topic)
+
+
+async def generate_social_post(
+    usr_topic: str, platform: Platform = Platform.TWITTER
+) -> str:
+    """
+    Generate a social media post using Groq API with platform-specific optimization.
+
+    Args:
+        usr_topic: The topic for the social media post
+        platform: The target social media platform
+
+    Returns:
+        Generated social media post text
+
+    Raises:
+        ValueError: If the topic is invalid
+        Exception: If API call fails
+    """
+    # Validate input
+    if not usr_topic or not usr_topic.strip():
+        raise ValueError("Topic cannot be empty")
+
+    # Sanitize topic to prevent prompt injection
+    sanitized_topic = usr_topic.replace("<", "&lt;").replace(">", "&gt;").strip()
+
+    # Get platform-specific prompt
+    prompt = get_platform_prompt(platform, sanitized_topic)
 
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",

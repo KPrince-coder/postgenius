@@ -22,31 +22,35 @@ AI-powered social media post generation using FastAPI, Jinja2, and Groq's API.
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd fastapi_jinja2_try
 ```
 
 2. Install dependencies:
+
 ```bash
 pip install -e .
 ```
 
 3. Set up environment variables:
+
 ```bash
 # Create a .env file
 echo "GROQ_API_KEY=your_groq_api_key_here" > .env
 ```
 
 4. Run the application:
+
 ```bash
 uvicorn main:app --reload
 ```
 
 5. Open your browser and navigate to:
-   - **Web Interface**: http://localhost:8000
-   - **API Documentation**: http://localhost:8000/docs
-   - **Alternative API Docs**: http://localhost:8000/redoc
+   - **Web Interface**: <http://localhost:8000>
+   - **API Documentation**: <http://localhost:8000/docs>
+   - **Alternative API Docs**: <http://localhost:8000/redoc>
 
 ## API Endpoints
 
@@ -70,6 +74,7 @@ curl -X POST "http://localhost:8000/api/generate-post" \
 ```
 
 Response:
+
 ```json
 {
   "success": true,

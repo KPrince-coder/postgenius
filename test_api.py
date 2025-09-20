@@ -24,15 +24,42 @@ async def test_api_generate_post():
         response = await client.post(
             "http://localhost:8000/api/generate-post", json=payload
         )
-        print(f"API Generate Post: {response.status_code}")
+        print(f"API Generate Post (default platform): {response.status_code}")
         if response.status_code == 200:
             data = response.json()
             print(f"Success: {data['success']}")
+            print(f"Platform: {data.get('platform', 'not specified')}")
             print(f"Generated Post: {data['generated_post'][:100]}...")
             print(f"Processing Time: {data['processing_time']}s")
         else:
             print(f"Error: {response.text}")
         return response.status_code == 200
+
+
+async def test_api_generate_post_platforms():
+    """Test the API post generation endpoint with different platforms."""
+    async with httpx.AsyncClient() as client:
+        platforms = ["twitter", "linkedin"]
+
+        for platform in platforms:
+            payload = {
+                "topic": "The benefits of morning exercise",
+                "platform": platform,
+            }
+            response = await client.post(
+                "http://localhost:8000/api/generate-post", json=payload
+            )
+            print(f"API Generate Post ({platform}): {response.status_code}")
+            if response.status_code == 200:
+                data = response.json()
+                print(f"Success: {data['success']}")
+                print(f"Platform: {data.get('platform', 'not specified')}")
+                print(f"Generated Post: {data['generated_post'][:100]}...")
+                print(f"Processing Time: {data['processing_time']}s")
+            else:
+                print(f"Error: {response.text}")
+            print()
+        return True
 
 
 async def test_rate_limiting():
@@ -69,8 +96,16 @@ async def main():
         print(f"Expected error (no Groq API key): {e}")
     print()
 
+    # Test API generation with platforms
+    print("3. Testing API generation with platforms...")
+    try:
+        await test_api_generate_post_platforms()
+    except Exception as e:
+        print(f"Expected error (no Groq API key): {e}")
+    print()
+
     # Test rate limiting
-    print("3. Testing rate limiting...")
+    print("4. Testing rate limiting...")
     try:
         await test_rate_limiting()
     except Exception as e:

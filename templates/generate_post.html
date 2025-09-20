@@ -24,18 +24,29 @@
             color: #333;
         }
 
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e1e5e9;
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s;
+            background-color: white;
         }
 
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus, textarea:focus, select:focus {
             outline: none;
             border-color: #667eea;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
         }
 
         button {
@@ -158,6 +169,13 @@
 
     <form method="post" id="generateForm">
         <div class="form-group">
+            <label for="platform">Platform:</label>
+            <select id="platform" name="platform" required>
+                <option value="twitter" selected>X (Twitter) Post</option>
+                <option value="linkedin">LinkedIn Post</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="topic">Topic or Idea:</label>
             <input type="text" id="topic" name="topic" placeholder="e.g., The benefits of morning exercise" value="{{ topic|e or '' }}" required maxlength="200">
         </div>
@@ -169,8 +187,11 @@
 
     {% if generated_post %}
     <div class="generated-post">
-        <h3>Generated Post:</h3>
+        <h3>Generated {{ platform_name or 'Social Media' }} Post:</h3>
         <div class="post-content">{{ generated_post|e }}</div>
+        {% if processing_time %}
+        <small style="color: #666; margin-top: 1rem; display: block;">Generated in {{ processing_time }}s for {{ platform_name or 'social media' }}</small>
+        {% endif %}
     </div>
     {% endif %}
 </div>
@@ -184,6 +205,7 @@
         const btnText = document.getElementById('btnText');
         const spinner = document.getElementById('spinner');
         const topicInput = document.getElementById('topic');
+        const platformSelect = document.getElementById('platform');
 
         // Function to show loading state
         function showLoading() {
@@ -215,14 +237,15 @@
         }
 
         // Function to show generated post
-        function showGeneratedPost(postContent, topic, processingTime) {
+        function showGeneratedPost(postContent, topic, processingTime, platform) {
             hideLoading();
+            const platformName = platform === 'twitter' ? 'X (Twitter)' : 'LinkedIn';
             const postDiv = document.createElement('div');
             postDiv.className = 'generated-post';
             postDiv.innerHTML = `
-                <h3>Generated Post:</h3>
+                <h3>Generated ${platformName} Post:</h3>
                 <div class="post-content">${postContent}</div>
-                ${processingTime ? `<small style="color: #666; margin-top: 1rem; display: block;">Generated in ${processingTime}s</small>` : ''}
+                ${processingTime ? `<small style="color: #666; margin-top: 1rem; display: block;">Generated in ${processingTime}s for ${platformName}</small>` : ''}
             `;
             form.insertAdjacentElement('afterend', postDiv);
         }
@@ -232,10 +255,16 @@
                 e.preventDefault(); // Prevent default form submission
 
                 const topic = topicInput.value.trim();
+                const platform = platformSelect.value;
 
                 // Basic validation
                 if (!topic) {
                     showError('Please provide a topic');
+                    return;
+                }
+
+                if (!platform) {
+                    showError('Please select a platform');
                     return;
                 }
 
@@ -259,7 +288,10 @@
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ topic: topic })
+                        body: JSON.stringify({
+                            topic: topic,
+                            platform: platform
+                        })
                     });
 
                     const data = await response.json();
@@ -269,7 +301,8 @@
                         showGeneratedPost(
                             data.generated_post,
                             topic,
-                            data.processing_time ? data.processing_time.toFixed(2) : null
+                            data.processing_time ? data.processing_time.toFixed(2) : null,
+                            platform
                         );
                     } else {
                         // API returned an error
