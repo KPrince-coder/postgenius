@@ -2,10 +2,17 @@
 Request models and enums for the API.
 """
 
+import importlib
 from enum import Enum
+
 from pydantic import BaseModel, Field, field_validator
 
-from ..config.settings import MAX_TOPIC_LENGTH, MIN_TOPIC_LENGTH
+# Force reload settings to pick up any changes
+from ..config import settings
+
+importlib.reload(settings)
+
+from ..config.settings import MAX_TOPIC_LENGTH, MIN_TOPIC_LENGTH  # noqa: E402
 
 
 class Platform(str, Enum):

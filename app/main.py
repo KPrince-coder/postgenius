@@ -30,7 +30,7 @@ from .utils import check_rate_limit, get_client_ip
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(name=__name__)
 
 # FastAPI App Configuration
 app = FastAPI(
@@ -43,6 +43,22 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+
+# Log current settings on startup
+logger.info(f"Application starting with MAX_TOPIC_LENGTH: {MAX_TOPIC_LENGTH}")
+logger.info(f"Application starting with MIN_TOPIC_LENGTH: {MIN_TOPIC_LENGTH}")
+
+
+# Debug endpoint to check current settings
+@app.get("/debug/settings", tags=["Debug"])
+async def debug_settings():
+    """Debug endpoint to check current validation settings"""
+    return {
+        "MAX_TOPIC_LENGTH": MAX_TOPIC_LENGTH,
+        "MIN_TOPIC_LENGTH": MIN_TOPIC_LENGTH,
+        "message": "Current validation settings",
+    }
 
 
 # Route Handlers
@@ -162,13 +178,22 @@ async def api_generate_post(
     """
     Generate a social media post via API endpoint.
 
-    - **topic**: The topic or idea for the social media post (3-200 characters)
+    - **topic**: The topic or idea for the social media post (3-1000 characters)
     - **platform**: The target social media platform (twitter or linkedin, defaults to twitter)
 
     Returns a JSON response with the generated post or error information.
     """
-    # Rate limiting check
+    # Debug logging for incoming request
     client_ip = get_client_ip(request)
+    logger.info(f"API request received from IP: {client_ip}")
+    logger.info(
+        f"Request data - Topic length: {len(request_data.topic)}, Platform: {request_data.platform}"
+    )
+    logger.debug(
+        f"Topic content: {request_data.topic[:100]}{'...' if len(request_data.topic) > 100 else ''}"
+    )
+
+    # Rate limiting check
     if not check_rate_limit(client_ip):
         logger.warning(f"Rate limit exceeded for IP: {client_ip}")
         raise HTTPException(

@@ -228,7 +228,7 @@
         </div>
         <div class="form-group">
             <label for="topic">Topic or Idea:</label>
-            <input type="text" id="topic" name="topic" placeholder="e.g., The benefits of morning exercise" value="{{ topic|e or '' }}" required maxlength="500">
+            <input type="text" id="topic" name="topic" placeholder="e.g., The benefits of morning exercise" value="{{ topic|e or '' }}" required maxlength="1000">
         </div>
         <button type="submit" id="generateBtn">
             <span id="btnText">Generate Post</span>
@@ -414,8 +414,8 @@
                     return;
                 }
 
-                if (topic.length > 200) {
-                    showError('Topic must be no more than 200 characters long');
+                if (topic.length > 1000) {
+                    showError('Topic must be no more than 1000 characters long');
                     return;
                 }
 
@@ -423,6 +423,13 @@
                 showLoading();
 
                 try {
+                    // Debug logging
+                    console.log('Sending request with data:', {
+                        topic: topic,
+                        platform: platform,
+                        topicLength: topic.length
+                    });
+
                     // Make API request
                     const response = await fetch('/api/generate-post', {
                         method: 'POST',
@@ -435,7 +442,19 @@
                         })
                     });
 
-                    const data = await response.json();
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+                    let data;
+                    try {
+                        data = await response.json();
+                        console.log('Response data:', data);
+                    } catch (jsonError) {
+                        console.error('Failed to parse JSON response:', jsonError);
+                        const textResponse = await response.text();
+                        console.log('Raw response text:', textResponse);
+                        throw new Error(`Server returned invalid JSON. Status: ${response.status}`);
+                    }
 
                     if (response.ok && data.success) {
                         // Success - show generated post
@@ -447,7 +466,23 @@
                         );
                     } else {
                         // API returned an error
-                        const errorMessage = data.error_message || data.detail || 'Failed to generate post. Please try again.';
+                        let errorMessage = 'Failed to generate post. Please try again.';
+
+                        if (response.status === 422) {
+                            // Validation error - extract detailed information
+                            if (data.detail && Array.isArray(data.detail)) {
+                                const validationErrors = data.detail.map(err =>
+                                    `${err.loc ? err.loc.join('.') : 'field'}: ${err.msg}`
+                                ).join(', ');
+                                errorMessage = `Validation error: ${validationErrors}`;
+                            } else if (data.detail) {
+                                errorMessage = `Validation error: ${data.detail}`;
+                            }
+                        } else {
+                            errorMessage = data.error_message || data.detail || errorMessage;
+                        }
+
+                        console.error('API Error:', errorMessage);
                         showError(errorMessage);
                     }
                 } catch (error) {
