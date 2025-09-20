@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Social Media Post Generation{% endblock %} - PostGenius</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% block header %}
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <a href="/" style="text-decoration: none; color: inherit;">PostGenius</a>
+            </div>
+            <ul>
+                <li><a href="/#features">Features</a></li>
+                <li><a href="/#about">About</a></li>
+                <li><a href="/#contact">Contact</a></li>
+                <li><a href="/generate-post">Generate Post</a></li>
+            </ul>
+        </nav>
+    </header>
+    {% endblock %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block footer %}
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 PostGenius. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#" aria-label="Facebook">📘</a>
+                <a href="#" aria-label="Twitter">🐦</a>
+                <a href="#" aria-label="LinkedIn">💼</a>
+                <a href="#" aria-label="YouTube">📺</a>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
