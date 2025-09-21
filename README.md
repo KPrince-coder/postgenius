@@ -1,6 +1,6 @@
 # Social Media Post Generator
 
-AI-powered social media post generation using FastAPI, Jinja2, and Groq's API.
+AI-powered social media post generation using FastAPI, Jinja2, HTMX, and Groq's API.
 
 ## Features
 
@@ -27,13 +27,13 @@ AI-powered social media post generation using FastAPI, Jinja2, and Groq's API.
 
 ```bash
 git clone <repository-url>
-cd fastapi_jinja2_try
+cd postgenius
 ```
 
 2. Install dependencies:
 
 ```bash
-pip install -e .
+uv sync
 ```
 
 3. Set up environment variables:
@@ -47,14 +47,12 @@ echo "GROQ_API_KEY=your_groq_api_key_here" > .env
 
 ```bash
 # Using uvicorn directly with new package structure
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 
 # Using the entry point script
-python run.py
+uv run python run.py
 
-# Or if using uv
-uv run uvicorn app.main:app --reload
-```
+
 
 5. Open your browser and navigate to:
    - **Web Interface**: <http://localhost:8000>
@@ -141,8 +139,8 @@ curl -X POST "http://localhost:8000/api/generate-post" \
 
 ### Project Structure
 
-```
-fastapi_jinja2_try/
+```text
+postgenius/
 ├── app/                    # Main application package
 │   ├── __init__.py
 │   ├── main.py            # FastAPI app and route handlers
