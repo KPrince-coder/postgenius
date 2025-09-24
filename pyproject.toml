@@ -1,5 +1,5 @@
 [project]
-name = "fastapi-jinja2-try"
+name = "postgenius"
 version = "0.1.0"
 description = "AI-powered social media post generation with FastAPI and Jinja2"
 readme = "README.md"
